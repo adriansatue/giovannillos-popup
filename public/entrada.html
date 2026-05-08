@@ -80,9 +80,81 @@
     .loader { text-align: center; padding: 2rem; color: var(--muted); font-size: 14px; }
 
     .refresh-hint { text-align: center; margin-top: 1rem; font-size: 11px; color: var(--muted); }
+
+    /* LOGIN */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .login-box { width: 100%; max-width: 340px; }
+    .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    .login-logo .logo-dot {
+      width: 42px; height: 42px; background: var(--brand); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-logo .logo-dot span { font-family: 'Bebas Neue', sans-serif; color: #fff; font-size: 22px; }
+    .login-logo .logo-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+    .login-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; margin-bottom: .3rem; }
+    .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.75rem; }
+    .login-field { position: relative; margin-bottom: 1rem; }
+    .login-field input {
+      width: 100%; padding: 13px 44px 13px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 15px; font-family: 'DM Sans', sans-serif;
+      color: var(--text); background: #fff; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .login-field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(236,107,80,.12); }
+    .login-field input.err { border-color: #E24B4A; box-shadow: 0 0 0 3px rgba(226,75,74,.1); }
+    .toggle-pw {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: var(--muted);
+    }
+    .toggle-pw svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+    .login-err { font-size: 12px; color: #E24B4A; margin-bottom: 1rem; display: none; }
+    .login-btn {
+      width: 100%; padding: 14px;
+      background: var(--brand); color: #fff; border: none;
+      border-radius: var(--radius);
+      font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px;
+      cursor: pointer; transition: background .15s;
+    }
+    .login-btn:hover { background: #C4522F; }
+    @keyframes loginShake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-7px); }
+      40%      { transform: translateX(7px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
   </style>
 </head>
 <body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="logo-dot"><span>G</span></div>
+        <div class="logo-name">Giovannillo's Pizza</div>
+      </div>
+      <div class="login-title">Panel de Entrada</div>
+      <div class="login-sub">Acceso restringido al equipo de organización.</div>
+      <div class="login-field">
+        <input type="password" id="pw-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter')login()" />
+        <button class="toggle-pw" onclick="togglePw()" tabindex="-1" aria-label="Mostrar contraseña">
+          <svg id="eye-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="login-err" id="login-err">Contraseña incorrecta. Inténtalo de nuevo.</div>
+      <button class="login-btn" onclick="login()">ACCEDER</button>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
   <div class="container">
 
     <div class="topbar">
@@ -104,8 +176,47 @@
 
     <div class="refresh-hint">Actualización automática cada 4s</div>
   </div>
+  </div> <!-- /app -->
 
   <script>
+    // SHA-256 hash of: Giov@nnill0s#2026
+    const PW_HASH = 'cbb622df85dab898c6bbb83d22b29c0fb715545ecead394570723d6a2da104e9';
+
+    async function sha256(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function login() {
+      const val = document.getElementById('pw-input').value;
+      const hash = await sha256(val);
+      if (hash === PW_HASH) {
+        sessionStorage.setItem('gv_auth', '1');
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        loadData();
+        setInterval(loadData, 4000);
+      } else {
+        const inp = document.getElementById('pw-input');
+        const err = document.getElementById('login-err');
+        inp.classList.add('err');
+        err.style.display = 'block';
+        inp.style.animation = 'loginShake .4s ease';
+        setTimeout(() => { inp.style.animation = ''; inp.classList.remove('err'); }, 400);
+      }
+    }
+
+    function togglePw() {
+      const inp = document.getElementById('pw-input');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    // Check session on load
+    if (sessionStorage.getItem('gv_auth') === '1') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }
+
     let db = [];
 
     function ini(nombre) {
@@ -165,8 +276,10 @@
       `).join('');
     }
 
-    loadData();
-    setInterval(loadData, 4000);
+    if (sessionStorage.getItem('gv_auth') === '1') {
+      loadData();
+      setInterval(loadData, 4000);
+    }
   </script>
 </body>
 </html>
