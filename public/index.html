@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giovannillo's Pizza · Registro</title>
+  <meta name="description" content="Regístrate para probar la pizza en el evento Giovannillo's" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #EC6B50;
+      --brand-dark: #C4522F;
+      --bg: #FFFAF8;
+      --surface: #fff;
+      --text: #1A1008;
+      --muted: #7A6B62;
+      --border: #E8DDD8;
+      --radius: 12px;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 3rem;
+    }
+    .container { width: 100%; max-width: 400px; }
+
+    /* LOGO */
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    .logo-dot {
+      width: 42px; height: 42px; background: var(--brand); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-dot span { font-family: 'Bebas Neue', sans-serif; color: #fff; font-size: 22px; }
+    .logo-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+
+    /* FORM */
+    .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; line-height: 1.1; margin-bottom: .4rem; }
+    .subtitulo { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.5; }
+
+    .field { margin-bottom: 1.25rem; }
+    .field label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 6px; }
+    .field input {
+      width: 100%; padding: 13px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 15px; font-family: 'DM Sans', sans-serif; color: var(--text);
+      background: var(--surface); outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(236,107,80,.12); }
+    .field input.err { border-color: #E24B4A; }
+    .err-msg { font-size: 11px; color: #E24B4A; margin-top: 4px; display: none; }
+    .field input.err + .err-msg { display: block; }
+
+    .tyc { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 1.75rem; }
+    .tyc input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--brand); flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+    .tyc label { font-size: 12px; color: var(--muted); line-height: 1.5; cursor: pointer; }
+    .tyc a { color: var(--brand); }
+    #tyc-err { font-size: 11px; color: #E24B4A; margin-top: -1.25rem; margin-bottom: 1rem; display: none; }
+
+    .btn {
+      width: 100%; padding: 15px;
+      background: var(--brand); color: #fff; border: none;
+      border-radius: var(--radius);
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px;
+      cursor: pointer; transition: background .15s, transform .1s;
+    }
+    .btn:hover { background: var(--brand-dark); }
+    .btn:active { transform: scale(.98); }
+
+    /* SUCCESS */
+    #ok-view { display: none; text-align: center; padding: 2rem 0; }
+    .ok-circle {
+      width: 80px; height: 80px; background: var(--brand); border-radius: 50%;
+      margin: 0 auto 1.5rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ok-circle svg { width: 40px; height: 40px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .ok-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: 2px; margin-bottom: .4rem; }
+    .ok-nombre { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--brand); letter-spacing: 1px; margin-bottom: 1rem; }
+    .ok-msg { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .ok-nota {
+      background: #FFF5F2; border: 1px solid #F5C4B3;
+      border-radius: var(--radius); padding: 1rem 1.25rem;
+      font-size: 13px; color: var(--muted); line-height: 1.5; text-align: left;
+    }
+    .ok-nota strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="logo">
+      <div class="logo-dot"><span>G</span></div>
+      <div class="logo-name">Giovannillo's Pizza</div>
+    </div>
+
+    <!-- FORM -->
+    <div id="form-view">
+      <div class="titulo">Regístrate para probar la pizza</div>
+      <div class="subtitulo">Solo tardas 30 segundos. Sin registro no hay pizza.</div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="f-nombre" placeholder="Juan García López" autocomplete="name" />
+        <div class="err-msg">Introduce tu nombre y apellido</div>
+      </div>
+      <div class="field">
+        <label>Código postal</label>
+        <input type="text" id="f-cp" placeholder="28001" maxlength="5" inputmode="numeric" />
+        <div class="err-msg">5 dígitos, ej. 28001</div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="f-email" placeholder="tu@email.com" autocomplete="email" />
+        <div class="err-msg">Email no válido</div>
+      </div>
+
+      <div class="tyc">
+        <input type="checkbox" id="tyc" />
+        <label for="tyc">Acepto los <a href="/terminos.html" target="_blank">términos y condiciones</a> y la <a href="/privacidad.html" target="_blank">política de privacidad</a></label>
+      </div>
+      <div id="tyc-err">Debes aceptar los términos</div>
+
+      <button class="btn" onclick="registrar()">QUIERO MI PIZZA</button>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="ok-view">
+      <div class="ok-circle">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ok-titulo">¡Listo, illo!</div>
+      <div class="ok-nombre" id="ok-nombre"></div>
+      <div class="ok-msg">Estás registrado. Muestra esta pantalla en la entrada.</div>
+      <div class="ok-nota">
+        <strong>Registro confirmado ✓</strong><br />
+        El equipo de entrada te validará en un momento y podrás disfrutar de tu pizza.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    async function registrar() {
+      const n = document.getElementById('f-nombre');
+      const c = document.getElementById('f-cp');
+      const e = document.getElementById('f-email');
+      const t = document.getElementById('tyc');
+      const tErr = document.getElementById('tyc-err');
+      let ok = true;
+
+      [n, c, e].forEach(el => el.classList.remove('err'));
+      tErr.style.display = 'none';
+
+      if (n.value.trim().split(' ').filter(Boolean).length < 2) { n.classList.add('err'); ok = false; }
+      if (!/^\d{5}$/.test(c.value.trim())) { c.classList.add('err'); ok = false; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.value.trim())) { e.classList.add('err'); ok = false; }
+      if (!t.checked) { tErr.style.display = 'block'; ok = false; }
+      if (!ok) return;
+
+      const btn = document.querySelector('.btn');
+      btn.textContent = 'REGISTRANDO...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: n.value.trim(),
+            cp: c.value.trim(),
+            email: e.value.trim()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error');
+      } catch (err) {
+        btn.textContent = 'QUIERO MI PIZZA';
+        btn.disabled = false;
+        alert('Error al registrar. Inténtalo de nuevo.');
+        return;
+      }
+
+      document.getElementById('ok-nombre').textContent = n.value.trim().split(' ')[0] + '!';
+      document.getElementById('form-view').style.display = 'none';
+      document.getElementById('ok-view').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

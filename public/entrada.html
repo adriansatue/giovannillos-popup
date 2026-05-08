@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giovannillo's · Panel de Entrada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #EC6B50;
+      --bg: #FFFAF8;
+      --surface: #fff;
+      --text: #1A1008;
+      --muted: #7A6B62;
+      --border: #E8DDD8;
+      --radius: 12px;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.25rem 1rem 3rem;
+    }
+    .container { width: 100%; max-width: 480px; margin: 0 auto; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--text); }
+    .live { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+    .live-dot { width: 7px; height: 7px; background: #2ECC71; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+    .stat { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: .875rem; text-align: center; }
+    .stat-n { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--text); line-height: 1; }
+    .stat-n.verde { color: #27AE60; }
+    .stat-n.naranja { color: var(--brand); }
+    .stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+
+    .search {
+      width: 100%; padding: 11px 14px; margin-bottom: 1rem;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 14px; font-family: 'DM Sans', sans-serif;
+      color: var(--text); background: var(--surface); outline: none;
+      transition: border-color .15s;
+    }
+    .search:focus { border-color: var(--brand); }
+
+    .lista { display: flex; flex-direction: column; gap: 6px; }
+    .item {
+      display: flex; align-items: center; gap: 10px;
+      padding: .875rem 1rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--brand);
+      transition: opacity .2s;
+    }
+    .item.validado { border-left-color: #27AE60; opacity: .55; }
+    .av {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #FFF5F2; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: var(--brand); flex-shrink: 0;
+    }
+    .av.ok { background: #EAF7EE; color: #27AE60; }
+    .info { flex: 1; min-width: 0; }
+    .nombre { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-val {
+      padding: 7px 14px; border: none; border-radius: 8px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      background: #EAF7EE; color: #1A7A3F; flex-shrink: 0;
+      transition: background .15s, color .15s;
+    }
+    .btn-val:hover { background: #27AE60; color: #fff; }
+    .btn-val:disabled { background: #EAF7EE; color: #27AE60; cursor: default; }
+
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: 14px; }
+    .loader { text-align: center; padding: 2rem; color: var(--muted); font-size: 14px; }
+
+    .refresh-hint { text-align: center; margin-top: 1rem; font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="topbar">
+      <div class="titulo">Panel de Entrada</div>
+      <div class="live"><div class="live-dot"></div>En vivo</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="st">—</div><div class="stat-l">Total</div></div>
+      <div class="stat"><div class="stat-n verde" id="sok">—</div><div class="stat-l">Validados</div></div>
+      <div class="stat"><div class="stat-n naranja" id="sp">—</div><div class="stat-l">Pendientes</div></div>
+    </div>
+
+    <input class="search" type="text" id="q" placeholder="Buscar por nombre o email..." oninput="render()" />
+
+    <div class="lista" id="lista">
+      <div class="loader">Cargando...</div>
+    </div>
+
+    <div class="refresh-hint">Actualización automática cada 4s</div>
+  </div>
+
+  <script>
+    let db = [];
+
+    function ini(nombre) {
+      const p = nombre.trim().split(' ').filter(Boolean);
+      return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/registros');
+        if (res.ok) { db = await res.json(); render(); }
+      } catch (e) { /* silent */ }
+    }
+
+    async function validar(email) {
+      const btn = document.querySelector(`[data-email="${CSS.escape(email)}"]`);
+      if (btn) { btn.disabled = true; btn.textContent = '...'; }
+      try {
+        await fetch('/api/validar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        await loadData();
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Validar'; }
+      }
+    }
+
+    function render() {
+      const q = (document.getElementById('q').value || '').toLowerCase();
+      const list = db
+        .filter(r => !q || r.nombre.toLowerCase().includes(q) || r.email.toLowerCase().includes(q))
+        .sort((a, b) => a.entrada - b.entrada);
+
+      document.getElementById('st').textContent = db.length;
+      document.getElementById('sok').textContent = db.filter(r => r.entrada).length;
+      document.getElementById('sp').textContent = db.filter(r => !r.entrada).length;
+
+      const el = document.getElementById('lista');
+      if (!list.length) {
+        el.innerHTML = '<div class="empty">Sin registros aún</div>';
+        return;
+      }
+      el.innerHTML = list.map(r => `
+        <div class="item ${r.entrada ? 'validado' : ''}">
+          <div class="av ${r.entrada ? 'ok' : ''}">${ini(r.nombre)}</div>
+          <div class="info">
+            <div class="nombre">${r.nombre}</div>
+            <div class="meta">${r.email} · ${r.cp}</div>
+          </div>
+          ${r.entrada
+            ? '<button class="btn-val" disabled>✓ OK</button>'
+            : `<button class="btn-val" data-email="${r.email}" onclick="validar('${r.email.replace(/'/g, "\\'")}')">Validar</button>`
+          }
+        </div>
+      `).join('');
+    }
+
+    loadData();
+    setInterval(loadData, 4000);
+  </script>
+</body>
+</html>

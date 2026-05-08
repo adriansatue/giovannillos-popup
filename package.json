@@ -1,0 +1,10 @@
+{
+  "name": "giovannillos-registro",
+  "version": "1.0.0",
+  "description": "Sistema de registro para evento Giovannillo's Pizza",
+  "private": true,
+  "scripts": {},
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  }
+}
