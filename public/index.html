@@ -73,24 +73,101 @@
     }
     .btn:hover { background: var(--brand-dark); }
     .btn:active { transform: scale(.98); }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
 
     /* SUCCESS */
-    #ok-view { display: none; text-align: center; padding: 2rem 0; }
-    .ok-circle {
-      width: 80px; height: 80px; background: var(--brand); border-radius: 50%;
+    #ok-view { display: none; text-align: center; padding: 1rem 0 2rem; }
+
+    .pizza-wrap {
+      position: relative;
+      width: 140px; height: 140px;
       margin: 0 auto 1.5rem;
-      display: flex; align-items: center; justify-content: center;
     }
-    .ok-circle svg { width: 40px; height: 40px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .ok-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: 2px; margin-bottom: .4rem; }
-    .ok-nombre { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--brand); letter-spacing: 1px; margin-bottom: 1rem; }
-    .ok-msg { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
-    .ok-nota {
-      background: #FFF5F2; border: 1px solid #F5C4B3;
-      border-radius: var(--radius); padding: 1rem 1.25rem;
-      font-size: 13px; color: var(--muted); line-height: 1.5; text-align: left;
+    .pizza-emoji {
+      font-size: 100px;
+      line-height: 1;
+      display: block;
+      animation: pizzaBounce .6s cubic-bezier(.36,.07,.19,.97) both;
     }
-    .ok-nota strong { color: var(--text); }
+    @keyframes pizzaBounce {
+      0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+      60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+      80%  { transform: scale(.92) rotate(-3deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .confetti { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    .confetti span {
+      position: absolute;
+      font-size: 18px;
+      animation: confettiFall 1.2s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0); opacity: 1; }
+      100% { transform: translateY(60px) rotate(360deg); opacity: 0; }
+    }
+
+    .ok-titulo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 46px; letter-spacing: 2px; line-height: 1;
+      margin-bottom: .2rem;
+    }
+    .ok-sub {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 1px;
+      color: var(--brand); margin-bottom: 1.75rem;
+    }
+
+    /* TICKET */
+    .ticket {
+      background: var(--surface);
+      border: 2px dashed #F5C4B3;
+      border-radius: 16px;
+      overflow: hidden;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+    .ticket-top {
+      background: var(--brand);
+      padding: 1rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ticket-top .t-brand {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px; letter-spacing: 2px; color: #fff;
+    }
+    .ticket-top .t-badge {
+      background: rgba(255,255,255,.2);
+      color: #fff; font-size: 10px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 4px 10px; border-radius: 20px;
+    }
+    .ticket-body { padding: 1.1rem 1.25rem; }
+    .t-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .85rem; }
+    .t-row:last-child { margin-bottom: 0; }
+    .t-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 3px; }
+    .t-value { font-size: 15px; font-weight: 500; color: var(--text); }
+    .t-value.big { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--brand); }
+    .ticket-footer {
+      border-top: 2px dashed #F5C4B3;
+      padding: .9rem 1.25rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tick-icon {
+      width: 32px; height: 32px; background: #EAF7EE; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .tick-icon svg { width: 16px; height: 16px; stroke: #27AE60; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .tick-txt { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .tick-txt strong { color: var(--text); }
+
+    .ok-hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -128,21 +205,66 @@
       </div>
       <div id="tyc-err">Debes aceptar los términos</div>
 
+      <div id="reg-err" style="display:none;background:#FFF0F0;border:1px solid #F5B3B3;border-radius:var(--radius);padding:.875rem 1rem;font-size:13px;color:#C0392B;margin-bottom:1rem;line-height:1.5;">
+        Algo ha fallado al registrarte. Comprueba tu conexión e inténtalo de nuevo.
+      </div>
+
       <button class="btn" onclick="registrar()">QUIERO MI PIZZA</button>
     </div>
 
     <!-- SUCCESS -->
     <div id="ok-view">
-      <div class="ok-circle">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+
+      <div class="pizza-wrap">
+        <span class="pizza-emoji">🍕</span>
+        <div class="confetti">
+          <span style="left:10%;animation-delay:.1s">🧀</span>
+          <span style="left:30%;animation-delay:.25s">⭐</span>
+          <span style="left:55%;animation-delay:.15s">🌶️</span>
+          <span style="left:75%;animation-delay:.3s">✨</span>
+          <span style="left:88%;animation-delay:.05s">🍅</span>
+        </div>
       </div>
-      <div class="ok-titulo">¡Listo, illo!</div>
-      <div class="ok-nombre" id="ok-nombre"></div>
-      <div class="ok-msg">Estás registrado. Muestra esta pantalla en la entrada.</div>
-      <div class="ok-nota">
-        <strong>Registro confirmado ✓</strong><br />
-        El equipo de entrada te validará en un momento y podrás disfrutar de tu pizza.
+
+      <div class="ok-titulo">¡Tu pizza<br>te espera!</div>
+      <div class="ok-sub" id="ok-nombre"></div>
+
+      <div class="ticket">
+        <div class="ticket-top">
+          <div class="t-brand">Giovannillo's Pizza</div>
+          <div class="t-badge">✓ Confirmado</div>
+        </div>
+        <div class="ticket-body">
+          <div class="t-row">
+            <div>
+              <div class="t-label">Nombre</div>
+              <div class="t-value big" id="ok-ticket-nombre"></div>
+            </div>
+            <div style="text-align:right">
+              <div class="t-label">Estado</div>
+              <div class="t-value" style="color:#27AE60;font-weight:600">Registrado</div>
+            </div>
+          </div>
+          <div class="t-row">
+            <div>
+              <div class="t-label">Email</div>
+              <div class="t-value" id="ok-ticket-email" style="font-size:13px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ticket-footer">
+          <div class="tick-icon">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="tick-txt">
+            <strong>Muestra esta pantalla en la entrada.</strong><br />
+            El equipo te validará y podrás llevarte tu pizza.
+          </div>
+        </div>
       </div>
+
+      <div class="ok-hint">¿Ya tienes tu slice? Comparte el evento con tus amigos 🍕</div>
+
     </div>
 
   </div>
@@ -184,11 +306,18 @@
       } catch (err) {
         btn.textContent = 'QUIERO MI PIZZA';
         btn.disabled = false;
-        alert('Error al registrar. Inténtalo de nuevo.');
+        btn.style.animation = 'shake .4s ease';
+        setTimeout(() => btn.style.animation = '', 400);
+        const errBox = document.getElementById('reg-err');
+        errBox.style.display = 'block';
         return;
       }
 
-      document.getElementById('ok-nombre').textContent = n.value.trim().split(' ')[0] + '!';
+      const nombre = n.value.trim();
+      const primerNombre = nombre.split(' ')[0];
+      document.getElementById('ok-nombre').textContent = '¡Hola, ' + primerNombre + '!';
+      document.getElementById('ok-ticket-nombre').textContent = primerNombre;
+      document.getElementById('ok-ticket-email').textContent = e.value.trim();
       document.getElementById('form-view').style.display = 'none';
       document.getElementById('ok-view').style.display = 'block';
     }
