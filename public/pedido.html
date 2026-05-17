@@ -91,6 +91,8 @@
     .subtitulo { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.5; }
 
     .field { margin-bottom: 1.25rem; }
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; min-width: 0; }
     .field label {
       display: block; font-size: 11px; font-weight: 500;
       text-transform: uppercase; letter-spacing: .6px;
@@ -307,9 +309,26 @@
       </div>
 
       <div class="field">
-        <label>Dirección de entrega</label>
-        <textarea id="f-direccion" placeholder="Calle Mayor 12, 3.º B, 28001 Madrid" autocomplete="street-address"></textarea>
-        <div class="err-msg">Introduce la dirección completa</div>
+        <label>Calle y número</label>
+        <input type="text" id="f-calle" placeholder="Calle Mayor 12, 3.º B" autocomplete="address-line1" />
+        <div class="err-msg">Introduce la calle y número</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Población</label>
+          <input type="text" id="f-poblacion" placeholder="Madrid" autocomplete="address-level2" />
+          <div class="err-msg">Introduce la ciudad</div>
+        </div>
+        <div class="field" style="max-width:120px">
+          <label>C. Postal</label>
+          <input type="text" id="f-cp" placeholder="28001" maxlength="5" inputmode="numeric" autocomplete="postal-code" />
+          <div class="err-msg">5 dígitos</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Teléfono</label>
+        <input type="tel" id="f-telefono" placeholder="612 345 678" autocomplete="tel" inputmode="tel" />
+        <div class="err-msg">Teléfono no válido (mín. 9 dígitos)</div>
       </div>
 
       <div class="field">
@@ -517,20 +536,26 @@
     // === Submit ===
     async function enviar() {
       const n    = document.getElementById('f-nombre');
-      const d    = document.getElementById('f-direccion');
+      const ca   = document.getElementById('f-calle');
+      const po   = document.getElementById('f-poblacion');
+      const cp   = document.getElementById('f-cp');
+      const tel  = document.getElementById('f-telefono');
       const f    = document.getElementById('f-franja');
       const t    = document.getElementById('tyc');
       const tErr = document.getElementById('tyc-err');
       const pErr = document.getElementById('pizza-err');
       let ok = true;
 
-      [n, d, f].forEach(el => el.classList.remove('err'));
+      [n, ca, po, cp, tel, f].forEach(el => el.classList.remove('err'));
       tErr.style.display = 'none';
       pErr.style.display = 'none';
       document.getElementById('api-err').style.display = 'none';
 
       if (n.value.trim().split(' ').filter(Boolean).length < 2) { n.classList.add('err'); ok = false; }
-      if (!d.value.trim())  { d.classList.add('err'); ok = false; }
+      if (!ca.value.trim())  { ca.classList.add('err'); ok = false; }
+      if (!po.value.trim())  { po.classList.add('err'); ok = false; }
+      if (!/^\d{5}$/.test(cp.value.trim())) { cp.classList.add('err'); ok = false; }
+      if (tel.value.replace(/\D/g,'').length < 9) { tel.classList.add('err'); ok = false; }
       if (!f.value)         { f.classList.add('err'); ok = false; }
       if (cC + cQ < 1)      { pErr.style.display = 'block'; ok = false; }
       if (!t.checked)       { tErr.style.display = 'block'; ok = false; }
@@ -545,10 +570,13 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            nombre:     n.value.trim(),
-            direccion:  d.value.trim(),
-            franja:     f.value,
-            carbonara:  cC,
+            nombre:    n.value.trim(),
+            calle:     ca.value.trim(),
+            poblacion: po.value.trim(),
+            cp:        cp.value.trim(),
+            telefono:  tel.value.trim(),
+            franja:    f.value,
+            carbonara: cC,
             seisquesos: cQ
           })
         });
@@ -582,7 +610,7 @@
 
       document.getElementById('ok-nombre').textContent          = '¡Hola, ' + primerNombre + '!';
       document.getElementById('ok-ticket-nombre').textContent   = primerNombre;
-      document.getElementById('ok-ticket-dir').textContent      = d.value.trim();
+      document.getElementById('ok-ticket-dir').textContent      = ca.value.trim() + '\n' + cp.value.trim() + ' ' + po.value.trim();
       document.getElementById('ok-ticket-franja').textContent   = franjaLabel;
       document.getElementById('ok-ticket-total').textContent    = String(total);
       document.getElementById('ok-ticket-detalle').textContent  = detalle.join(' · ');

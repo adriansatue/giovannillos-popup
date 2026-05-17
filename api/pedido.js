@@ -43,17 +43,20 @@ async function _handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { nombre, direccion, franja, carbonara, seisquesos } = req.body || {};
+  const { nombre, calle, poblacion, cp, telefono, franja, carbonara, seisquesos } = req.body || {};
 
   // Required fields
-  if (!nombre || !direccion || !franja) {
+  if (!nombre || !calle || !poblacion || !cp || !franja) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
   if (nombre.trim().split(' ').filter(Boolean).length < 2) {
     return res.status(400).json({ error: 'Nombre completo requerido' });
   }
-  if (!direccion.trim()) {
+  if (!calle.trim() || !poblacion.trim()) {
     return res.status(400).json({ error: 'Dirección requerida' });
+  }
+  if (!/^\d{5}$/.test(cp.trim())) {
+    return res.status(400).json({ error: 'Código postal inválido' });
   }
 
   // Pizza quantities
@@ -82,10 +85,13 @@ async function _handler(req, res) {
   const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const pedido = {
     id,
-    nombre:     nombre.trim(),
-    direccion:  direccion.trim(),
+    nombre:    nombre.trim(),
+    calle:     calle.trim(),
+    poblacion: poblacion.trim(),
+    cp:        cp.trim(),
+    telefono:  (telefono || '').trim(),
     franja,
-    carbonara:  c,
+    carbonara: c,
     seisquesos: q,
     total,
     ts:     new Date().toISOString(),
