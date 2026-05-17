@@ -81,6 +81,18 @@
 
     .refresh-hint { text-align: center; margin-top: 1rem; font-size: 11px; color: var(--muted); }
 
+    /* NOTIF BUTTON */
+    .notif-btn {
+      background: none; border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 5px 11px; cursor: pointer;
+      font-size: 12px; font-weight: 500; color: var(--muted);
+      display: flex; align-items: center; gap: 5px;
+      transition: all .15s; white-space: nowrap; font-family: 'DM Sans', sans-serif;
+    }
+    .notif-btn:hover { border-color: var(--brand); color: var(--brand); }
+    .notif-btn.activo { background: #EAF7EE; border-color: #27AE60; color: #1A7A3F; }
+    .notif-btn.error  { border-color: #E24B4A; color: #C0392B; }
+
     /* LOGIN */
     #login-screen {
       position: fixed; inset: 0; z-index: 999;
@@ -159,7 +171,10 @@
 
     <div class="topbar">
       <div class="titulo">Panel de Entrada</div>
-      <div class="live"><div class="live-dot"></div>En vivo</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="notif-btn" id="notif-btn" onclick="toggleNotifs()">🔔 Notificaciones</button>
+        <div class="live"><div class="live-dot"></div>En vivo</div>
+      </div>
     </div>
 
     <div class="stats">
@@ -280,6 +295,90 @@
       loadData();
       setInterval(loadData, 4000);
     }
+
+    // === Push Notifications ===
+    let pushSub = null;
+
+    async function toggleNotifs() {
+      const btn = document.getElementById('notif-btn');
+      if (pushSub) {
+        try {
+          await fetch('/api/subscribe-push', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: pushSub.endpoint })
+          });
+          await pushSub.unsubscribe();
+        } catch (e) { /* silent */ }
+        pushSub = null;
+        btn.textContent = '🔔 Notificaciones';
+        btn.classList.remove('activo', 'error');
+        return;
+      }
+
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        btn.classList.add('error');
+        btn.textContent = '⚠ No soportado';
+        return;
+      }
+
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        btn.classList.add('error');
+        btn.textContent = '✗ Bloqueado';
+        return;
+      }
+
+      try {
+        btn.textContent = '…';
+        const { publicKey } = await fetch('/api/vapid-key').then(r => r.json());
+        if (!publicKey) throw new Error('VAPID no configurado');
+
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+
+        await fetch('/api/subscribe-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sub.toJSON())
+        });
+
+        pushSub = sub;
+        btn.textContent = '🔔 Activo';
+        btn.classList.add('activo');
+      } catch (e) {
+        console.error('Push error:', e);
+        btn.classList.add('error');
+        btn.textContent = '⚠ Error';
+      }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const raw     = atob(base64);
+      return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    }
+
+    // Restore subscription state on reload
+    (async () => {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+        if (!reg) return;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          pushSub = sub;
+          const btn = document.getElementById('notif-btn');
+          if (btn) { btn.textContent = '🔔 Activo'; btn.classList.add('activo'); }
+        }
+      } catch (e) { /* silent */ }
+    })();
   </script>
 </body>
 </html>
