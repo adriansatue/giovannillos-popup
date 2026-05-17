@@ -164,6 +164,10 @@
     .ped-tags { display: flex; gap: 6px; flex-wrap: wrap; }
     .ped-tag { font-size: 11px; background: #FFF5F2; color: var(--muted); padding: 3px 8px; border-radius: 20px; }
     .ped-tag.pizza { color: var(--brand); font-weight: 500; }
+    .ped-estado { margin-left: auto; border: none; cursor: pointer; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; font-family: 'DM Sans', sans-serif; transition: opacity .15s; }
+    .ped-estado[data-e="pendiente"] { background: #FFF3E0; color: #D07000; }
+    .ped-estado[data-e="confirmado"] { background: #E8F4FC; color: #1565C0; }
+    .ped-estado[data-e="entregado"]  { background: #EAF7EE; color: #27AE60; }
   </style>
 </head>
 <body>
@@ -357,6 +361,9 @@
       return DIAS_PED[d.getDay()] + ' ' + d.getDate() + ' ' + MESES_PED[d.getMonth()] + ' · ' + d.getHours() + ':00–' + (d.getHours()+2) + ':00';
     }
 
+    const ESTADOS_CYCLE = ['pendiente', 'confirmado', 'entregado'];
+    const ESTADO_LABEL  = { pendiente: 'Pendiente', confirmado: 'Confirmado', entregado: 'Entregado' };
+
     function renderPedidos() {
       const q = (document.getElementById('qp')?.value || '').toLowerCase();
       const list = dbPed.filter(p => !q ||
@@ -388,8 +395,28 @@
           + (p.telefono ? '<span class="ped-tag">📱 ' + p.telefono + '</span>' : '')
           + (p.carbonara ? '<span class="ped-tag pizza">🍕 ' + p.carbonara + ' Carbonara</span>' : '')
           + (p.seisquesos ? '<span class="ped-tag pizza">🧀 ' + p.seisquesos + ' 6 Quesos</span>' : '')
+          + '<button class="ped-estado" data-e="' + (p.estado||'pendiente') + '" onclick="cambiarEstado(\'' + p.id + '\')">' + ESTADO_LABEL[p.estado||'pendiente'] + '</button>'
           + '</div></div>';
       }).join('');
+    }
+
+    async function cambiarEstado(id) {
+      const pedido = dbPed.find(p => p.id === id);
+      if (!pedido) return;
+      const idx  = ESTADOS_CYCLE.indexOf(pedido.estado || 'pendiente');
+      const next = ESTADOS_CYCLE[(idx + 1) % ESTADOS_CYCLE.length];
+      pedido.estado = next;   // optimistic
+      renderPedidos();
+      try {
+        await fetch('/api/actualizar-pedido', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, estado: next })
+        });
+      } catch (e) {
+        pedido.estado = ESTADOS_CYCLE[idx]; // revert
+        renderPedidos();
+      }
     }
 
     if (sessionStorage.getItem('gv_auth') === '1') {
