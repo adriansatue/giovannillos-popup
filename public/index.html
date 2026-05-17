@@ -32,13 +32,52 @@
     .container { width: 100%; max-width: 400px; }
 
     /* LOGO */
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    .logo { display: flex; align-items: center; margin-bottom: 2rem; }
+    .logo-img { height: 28px; width: auto; display: block; }
+    .logo-fallback { display: none; align-items: center; gap: 10px; }
     .logo-dot {
       width: 42px; height: 42px; background: var(--brand); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
     }
     .logo-dot span { font-family: 'Bebas Neue', sans-serif; color: #fff; font-size: 22px; }
     .logo-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+
+    /* HERO */
+    .hero-wrap { position: relative; margin-bottom: 2rem; }
+    .hero-band {
+      position: relative; border-radius: var(--radius);
+      overflow: hidden; background: var(--brand); height: 190px;
+    }
+    .hero-chef {
+      position: absolute; bottom: -2px; right: 8px;
+      height: 188px; width: auto;
+      mix-blend-mode: multiply; pointer-events: none;
+    }
+    .hero-sticker {
+      position: absolute; top: -22px; right: -12px;
+      width: 86px; height: auto;
+      transform: rotate(14deg); pointer-events: none; z-index: 5;
+      mix-blend-mode: multiply;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,.18));
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.65) 0%, rgba(0,0,0,.08) 55%, transparent 100%);
+      display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 1.1rem 1.25rem;
+    }
+    .hero-tag {
+      display: inline-block;
+      font-family: 'Bebas Neue', sans-serif; font-size: 10px;
+      letter-spacing: 2.5px; color: #fff; background: var(--brand);
+      padding: 4px 12px; border-radius: 20px; margin-bottom: .4rem;
+    }
+    .hero-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px; letter-spacing: 2px; color: #fff; line-height: 1;
+      text-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .ok-logo { height: 22px; width: auto; display: block; margin: 0 auto 1.25rem; }
 
     /* FORM */
     .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; line-height: 1.1; margin-bottom: .4rem; }
@@ -83,23 +122,15 @@
 
     /* SUCCESS */
     #ok-view { display: none; text-align: center; padding: 1rem 0 2rem; }
-
-    .pizza-wrap {
-      position: relative;
-      width: 140px; height: 140px;
-      margin: 0 auto 1.5rem;
+    .ok-sticker-wrap { position: relative; width: 170px; height: 170px; margin: 0 auto 1.5rem; }
+    .ok-sticker {
+      width: 150px; height: auto; display: block; margin: 0 auto;
+      mix-blend-mode: multiply;
+      animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
     }
-    .pizza-emoji {
-      font-size: 100px;
-      line-height: 1;
-      display: block;
-      animation: pizzaBounce .6s cubic-bezier(.36,.07,.19,.97) both;
-    }
-    @keyframes pizzaBounce {
-      0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
-      60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
-      80%  { transform: scale(.92) rotate(-3deg); }
-      100% { transform: scale(1) rotate(0deg); }
+    @keyframes popIn {
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
     .confetti { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     .confetti span {
@@ -174,12 +205,26 @@
   <div class="container">
 
     <div class="logo">
-      <div class="logo-dot"><span>G</span></div>
-      <div class="logo-name">Giovannillo's Pizza</div>
+      <img src="/img/logo.png" class="logo-img" alt="Giovannillo's Pizza"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+      <div class="logo-fallback">
+        <div class="logo-dot"><span>G</span></div>
+        <div class="logo-name">Giovannillo's Pizza</div>
+      </div>
     </div>
 
     <!-- FORM -->
     <div id="form-view">
+      <div class="hero-wrap">
+        <div class="hero-band">
+          <img src="/img/chef.png" class="hero-chef" alt="" onerror="this.style.display='none'" />
+          <div class="hero-overlay">
+            <span class="hero-tag">EVENTO EXCLUSIVO</span>
+            <div class="hero-headline">La pizza<br>de la que<br>todos hablan</div>
+          </div>
+        </div>
+        <img src="/img/sticker-full-sabor.png" class="hero-sticker" alt="" onerror="this.style.display='none'" />
+      </div>
       <div class="titulo">Regístrate para probar la pizza</div>
       <div class="subtitulo">Solo tardas 30 segundos. Sin registro no hay pizza.</div>
 
@@ -214,9 +259,9 @@
 
     <!-- SUCCESS -->
     <div id="ok-view">
-
-      <div class="pizza-wrap">
-        <span class="pizza-emoji">🍕</span>
+      <img src="/img/logo.png" class="ok-logo" alt="Giovannillo's Pizza" onerror="this.style.display='none'" />
+      <div class="ok-sticker-wrap">
+        <img src="/img/sticker-selio.png" class="ok-sticker" alt="¡Se lió!" onerror="this.style.display='none'" />
         <div class="confetti">
           <span style="left:10%;animation-delay:.1s">🧀</span>
           <span style="left:30%;animation-delay:.25s">⭐</span>

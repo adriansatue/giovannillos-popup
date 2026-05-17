@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Giovannillo's Pizza · Muestra de Producto</title>
-  <meta name="description" content="Solicita tu muestra de pizza Giovannillo's en casa" />
+  <title>Giovannillo's Pizza · Envío Exclusivo</title>
+  <meta name="description" content="Recibe en casa tu selección exclusiva de pizzas Giovannillo's" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
   <style>
@@ -32,13 +32,59 @@
     .container { width: 100%; max-width: 400px; }
 
     /* LOGO */
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    .logo { display: flex; align-items: center; margin-bottom: 2rem; }
+    .logo-img { height: 28px; width: auto; display: block; }
+    .logo-fallback { display: none; align-items: center; gap: 10px; }
     .logo-dot {
       width: 42px; height: 42px; background: var(--brand); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
     }
     .logo-dot span { font-family: 'Bebas Neue', sans-serif; color: #fff; font-size: 22px; }
     .logo-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+
+    /* HERO */
+    .hero-wrap { position: relative; margin-bottom: 2rem; }
+    .hero-band {
+      position: relative; border-radius: var(--radius);
+      overflow: hidden; background: var(--brand); height: 200px;
+    }
+    .hero-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 15%;
+      display: block;
+    }
+    .hero-chef {
+      position: absolute; bottom: -2px; right: 8px;
+      height: 196px; width: auto;
+      mix-blend-mode: multiply; pointer-events: none;
+    }
+    .hero-sticker {
+      position: absolute; top: -22px; right: -12px;
+      width: 86px; height: auto;
+      transform: rotate(14deg); pointer-events: none; z-index: 5;
+      mix-blend-mode: multiply;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,.18));
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.65) 0%, rgba(0,0,0,.08) 55%, transparent 100%);
+      display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 1.1rem 1.25rem;
+    }
+    .hero-tag {
+      display: inline-block;
+      font-family: 'Bebas Neue', sans-serif; font-size: 10px;
+      letter-spacing: 2.5px; color: #fff; background: var(--brand);
+      padding: 4px 12px; border-radius: 20px;
+      margin-bottom: .4rem;
+    }
+    .hero-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px; letter-spacing: 2px; color: #fff; line-height: 1;
+      text-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .ok-logo { height: 22px; width: auto; display: block; margin: 0 auto 1.25rem; }
 
     /* FORM */
     .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; line-height: 1.1; margin-bottom: .4rem; }
@@ -96,10 +142,16 @@
     }
     .pizza-total-badge.lleno { background: #27AE60; }
     .pizza-row {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; gap: 12px;
       padding: .875rem 1rem;
       border-top: 1px solid var(--border);
     }
+    .pizza-thumb {
+      width: 54px; height: 54px; border-radius: 50%;
+      object-fit: cover; flex-shrink: 0;
+      border: 2px solid var(--border); background: var(--bg);
+    }
+    .pizza-info { flex: 1; min-width: 0; }
     .pizza-name { font-size: 15px; font-weight: 500; color: var(--text); }
     .pizza-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .spinner { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -160,16 +212,15 @@
 
     /* SUCCESS */
     #ok-view { display: none; text-align: center; padding: 1rem 0 2rem; }
-    .pizza-wrap { position: relative; width: 140px; height: 140px; margin: 0 auto 1.5rem; }
-    .pizza-emoji {
-      font-size: 100px; line-height: 1; display: block;
-      animation: pizzaBounce .6s cubic-bezier(.36,.07,.19,.97) both;
+    .ok-sticker-wrap { position: relative; width: 170px; height: 170px; margin: 0 auto 1.5rem; }
+    .ok-sticker {
+      width: 150px; height: auto; display: block; margin: 0 auto;
+      mix-blend-mode: multiply;
+      animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
     }
-    @keyframes pizzaBounce {
-      0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
-      60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
-      80%  { transform: scale(.92) rotate(-3deg); }
-      100% { transform: scale(1) rotate(0deg); }
+    @keyframes popIn {
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
     .confetti { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     .confetti span {
@@ -225,14 +276,29 @@
   <div class="container">
 
     <div class="logo">
-      <div class="logo-dot"><span>G</span></div>
-      <div class="logo-name">Giovannillo's Pizza</div>
+      <img src="/img/logo.png" class="logo-img" alt="Giovannillo's Pizza"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+      <div class="logo-fallback">
+        <div class="logo-dot"><span>G</span></div>
+        <div class="logo-name">Giovannillo's Pizza</div>
+      </div>
     </div>
 
     <!-- FORM VIEW -->
     <div id="form-view">
-      <div class="titulo">Solicitar muestra<br>de producto</div>
-      <div class="subtitulo">Te llevamos las pizzas a casa. Mínimo 24 h de antelación · Máximo 6 pizzas por pedido.</div>
+      <div class="hero-wrap">
+        <div class="hero-band">
+          <img src="/img/pizza-carbonara.jpg" class="hero-img" alt="" onerror="this.style.opacity='0'" />
+          <img src="/img/chef.png" class="hero-chef" alt="" onerror="this.style.display='none'" />
+          <div class="hero-overlay">
+            <span class="hero-tag">SELECCIÓN EXCLUSIVA</span>
+            <div class="hero-headline">Tu pizza,<br>a domicilio</div>
+          </div>
+        </div>
+        <img src="/img/sticker-planazo.png" class="hero-sticker" alt="" onerror="this.style.display='none'" />
+      </div>
+      <div class="titulo">Tu envío<br>exclusivo</div>
+      <div class="subtitulo">Selección especial para ti. Dinos dónde y cuándo, y llevamos las pizzas a tu puerta — mínimo 24 h de antelación.</div>
 
       <div class="field">
         <label>Nombre completo</label>
@@ -262,7 +328,8 @@
         </div>
 
         <div class="pizza-row">
-          <div>
+          <img src="/img/pizza-carbonara.jpg" class="pizza-thumb" alt="Carbonara" />
+          <div class="pizza-info">
             <div class="pizza-name">Carbonara</div>
             <div class="pizza-desc">Bacon, nata, parmesano, huevo</div>
           </div>
@@ -274,7 +341,8 @@
         </div>
 
         <div class="pizza-row">
-          <div>
+          <img src="/img/pizza-seis-quesos.jpg" class="pizza-thumb" alt="6 Quesos" />
+          <div class="pizza-info">
             <div class="pizza-name">6 Quesos</div>
             <div class="pizza-desc">Mozzarella, gouda, brie, gorgonzola…</div>
           </div>
@@ -301,8 +369,9 @@
 
     <!-- SUCCESS VIEW -->
     <div id="ok-view">
-      <div class="pizza-wrap">
-        <span class="pizza-emoji">🍕</span>
+      <img src="/img/logo.png" class="ok-logo" alt="Giovannillo's Pizza" onerror="this.style.display='none'" />
+      <div class="ok-sticker-wrap">
+        <img src="/img/sticker-approved.png" class="ok-sticker" alt="Giovannillo's Approved" onerror="this.style.display='none'" />
         <div class="confetti">
           <span style="left:10%;animation-delay:.1s">🧀</span>
           <span style="left:30%;animation-delay:.25s">⭐</span>
@@ -312,7 +381,7 @@
         </div>
       </div>
 
-      <div class="ok-titulo">¡Pedido<br>confirmado!</div>
+      <div class="ok-titulo">¡Todo<br>listo!</div>
       <div class="ok-sub" id="ok-nombre"></div>
 
       <div class="ticket">
@@ -359,13 +428,13 @@
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="tick-txt">
-            <strong>Te avisaremos antes de la entrega.</strong><br />
-            El equipo de Giovannillo's se pondrá en contacto contigo.
+            <strong>Envío exclusivo confirmado.</strong><br />
+            Nuestro equipo te escribirá antes de la entrega para coordinar los detalles.
           </div>
         </div>
       </div>
 
-      <div class="ok-hint">¿Te ha gustado? ¡Cuéntalo a tus amigos! 🍕</div>
+      <div class="ok-hint">Este envío es solo para ti — gracias por ser parte del lanzamiento de Giovannillo's. 🍕</div>
     </div>
 
   </div>
