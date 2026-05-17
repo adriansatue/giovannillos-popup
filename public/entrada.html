@@ -142,6 +142,28 @@
       60%      { transform: translateX(-4px); }
       80%      { transform: translateX(4px); }
     }
+
+    /* TABS */
+    .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; }
+    .tab { flex: 1; padding: 8px; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); background: none; transition: background .15s, color .15s; }
+    .tab.active { background: var(--brand); color: #fff; }
+    .tab:hover:not(.active) { background: var(--bg); }
+
+    /* PEDIDO ITEMS */
+    .ped-item {
+      padding: 1rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--brand);
+      margin-bottom: 6px;
+    }
+    .ped-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: .4rem; }
+    .ped-nombre { font-size: 14px; font-weight: 500; color: var(--text); }
+    .ped-franja { font-size: 11px; color: var(--brand); font-weight: 500; text-align: right; flex-shrink: 0; }
+    .ped-dir { font-size: 12px; color: var(--muted); margin-bottom: .35rem; }
+    .ped-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ped-tag { font-size: 11px; background: #FFF5F2; color: var(--muted); padding: 3px 8px; border-radius: 20px; }
+    .ped-tag.pizza { color: var(--brand); font-weight: 500; }
   </style>
 </head>
 <body>
@@ -177,16 +199,33 @@
       </div>
     </div>
 
-    <div class="stats">
-      <div class="stat"><div class="stat-n" id="st">—</div><div class="stat-l">Total</div></div>
-      <div class="stat"><div class="stat-n verde" id="sok">—</div><div class="stat-l">Validados</div></div>
-      <div class="stat"><div class="stat-n naranja" id="sp">—</div><div class="stat-l">Pendientes</div></div>
+    <div class="tabs">
+      <button class="tab active" id="tab-reg" onclick="setTab('reg')">Registros</button>
+      <button class="tab" id="tab-ped" onclick="setTab('ped')">Pedidos de Muestra</button>
     </div>
 
-    <input class="search" type="text" id="q" placeholder="Buscar por nombre o email..." oninput="render()" />
+    <div id="section-reg">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="st">—</div><div class="stat-l">Total</div></div>
+        <div class="stat"><div class="stat-n verde" id="sok">—</div><div class="stat-l">Validados</div></div>
+        <div class="stat"><div class="stat-n naranja" id="sp">—</div><div class="stat-l">Pendientes</div></div>
+      </div>
+      <input class="search" type="text" id="q" placeholder="Buscar por nombre o email..." oninput="render()" />
+      <div class="lista" id="lista">
+        <div class="loader">Cargando...</div>
+      </div>
+    </div>
 
-    <div class="lista" id="lista">
-      <div class="loader">Cargando...</div>
+    <div id="section-ped" style="display:none">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="pt">—</div><div class="stat-l">Pedidos</div></div>
+        <div class="stat"><div class="stat-n naranja" id="pp-total">—</div><div class="stat-l">Pizzas</div></div>
+        <div class="stat"><div class="stat-n verde" id="pp-prox">—</div><div class="stat-l">Próxima</div></div>
+      </div>
+      <input class="search" type="text" id="qp" placeholder="Buscar por nombre o dirección..." oninput="renderPedidos()" />
+      <div class="lista" id="lista-ped">
+        <div class="loader">Cargando...</div>
+      </div>
     </div>
 
     <div class="refresh-hint">Actualización automática cada 4s</div>
@@ -209,8 +248,8 @@
         sessionStorage.setItem('gv_auth', '1');
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        loadData();
-        setInterval(loadData, 4000);
+        loadData(); loadPedidos();
+        setInterval(() => { loadData(); loadPedidos(); }, 4000);
       } else {
         const inp = document.getElementById('pw-input');
         const err = document.getElementById('login-err');
@@ -291,9 +330,71 @@
       `).join('');
     }
 
+    // === Pedidos de Muestra ===
+    let tab = 'reg';
+
+    function setTab(name) {
+      tab = name;
+      document.getElementById('section-reg').style.display = name === 'reg' ? '' : 'none';
+      document.getElementById('section-ped').style.display = name === 'ped' ? '' : 'none';
+      document.getElementById('tab-reg').classList.toggle('active', name === 'reg');
+      document.getElementById('tab-ped').classList.toggle('active', name === 'ped');
+    }
+
+    let dbPed = [];
+    const DIAS_PED  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const MESES_PED = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+    async function loadPedidos() {
+      try {
+        const res = await fetch('/api/pedidos');
+        if (res.ok) { dbPed = await res.json(); renderPedidos(); }
+      } catch (e) { /* silent */ }
+    }
+
+    function franjaFmt(iso) {
+      const d = new Date(iso);
+      return DIAS_PED[d.getDay()] + ' ' + d.getDate() + ' ' + MESES_PED[d.getMonth()] + ' · ' + d.getHours() + ':00–' + (d.getHours()+2) + ':00';
+    }
+
+    function renderPedidos() {
+      const q = (document.getElementById('qp')?.value || '').toLowerCase();
+      const list = dbPed.filter(p => !q ||
+        p.nombre.toLowerCase().includes(q) ||
+        (p.calle||'').toLowerCase().includes(q) ||
+        (p.poblacion||'').toLowerCase().includes(q)
+      );
+
+      document.getElementById('pt').textContent = dbPed.length;
+      document.getElementById('pp-total').textContent = dbPed.reduce((s,p) => s + (p.total||0), 0);
+      const ahora = new Date();
+      const prox = dbPed.filter(p => new Date(p.franja) > ahora).sort((a,b) => new Date(a.franja)-new Date(b.franja))[0];
+      document.getElementById('pp-prox').textContent = prox
+        ? (new Date(prox.franja).getDate() + '/' + (new Date(prox.franja).getMonth()+1))
+        : '—';
+
+      const el = document.getElementById('lista-ped');
+      if (!list.length) { el.innerHTML = '<div class="empty">Sin pedidos aún</div>'; return; }
+
+      el.innerHTML = list.map(p => {
+        const fr = p.franja ? franjaFmt(p.franja) : '—';
+        const cpPob = (p.cp || '') + (p.poblacion ? ' ' + p.poblacion : '');
+        const dir = [p.calle, cpPob].filter(Boolean).join(', ');
+        return '<div class="ped-item">'
+          + '<div class="ped-head"><div class="ped-nombre">' + p.nombre + '</div>'
+          + '<div class="ped-franja">' + fr + '</div></div>'
+          + (dir ? '<div class="ped-dir">' + dir + '</div>' : '')
+          + '<div class="ped-tags">'
+          + (p.telefono ? '<span class="ped-tag">📱 ' + p.telefono + '</span>' : '')
+          + (p.carbonara ? '<span class="ped-tag pizza">🍕 ' + p.carbonara + ' Carbonara</span>' : '')
+          + (p.seisquesos ? '<span class="ped-tag pizza">🧀 ' + p.seisquesos + ' 6 Quesos</span>' : '')
+          + '</div></div>';
+      }).join('');
+    }
+
     if (sessionStorage.getItem('gv_auth') === '1') {
-      loadData();
-      setInterval(loadData, 4000);
+      loadData(); loadPedidos();
+      setInterval(() => { loadData(); loadPedidos(); }, 4000);
     }
 
     // === Push Notifications ===
