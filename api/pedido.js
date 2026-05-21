@@ -77,8 +77,12 @@ async function _handler(req, res) {
   }
   // Allow 60 s tolerance for clock skew
   const minStart = new Date(Date.now() + 24 * 60 * 60 * 1000 - 60_000);
+  const maxStart = new Date(2026, 5, 6, 23, 59, 59); // 6 junio 2026
   if (startTime < minStart) {
     return res.status(400).json({ error: 'La entrega debe solicitarse con al menos 24 h de antelación' });
+  }
+  if (startTime > maxStart) {
+    return res.status(400).json({ error: 'El plazo de pedidos cierra el 6 de junio de 2026' });
   }
 
   // Persist order

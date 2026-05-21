@@ -459,9 +459,11 @@
       const sel     = document.getElementById('f-franja');
       const ahora   = new Date();
       const minTime = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
+      const maxTime = new Date(2026, 5, 6, 23, 59, 59); // 6 junio 2026, última entrega
       let count = 0;
 
-      for (let d = 0; d <= 7; d++) {
+      const diasHastaFin = Math.ceil((maxTime - ahora) / (24 * 60 * 60 * 1000));
+      for (let d = 0; d <= diasHastaFin; d++) {
         const base = new Date(ahora);
         base.setDate(base.getDate() + d);
         base.setHours(0, 0, 0, 0);
@@ -469,7 +471,7 @@
         for (const h of HORAS) {
           const slot = new Date(base);
           slot.setHours(h, 0, 0, 0);
-          if (slot >= minTime) {
+          if (slot >= minTime && slot <= maxTime) {
             const fin  = h + 2;
             const label =
               DIAS[slot.getDay()] + ' ' + slot.getDate() + ' ' +
