@@ -459,8 +459,16 @@
 
       try {
         btn.textContent = '…';
-        const { publicKey } = await fetch('/api/vapid-key').then(r => r.json());
-        if (!publicKey) throw new Error('VAPID no configurado');
+        const vapidRes = await fetch('/api/vapid-key').then(r => r.json());
+        const publicKey = vapidRes.publicKey;
+        if (!publicKey) throw new Error('VAPID no configurado en el servidor');
+
+        // Unsubscribe any existing sub with a different key before resubscribing
+        const regExist = await navigator.serviceWorker.getRegistration('/sw.js');
+        if (regExist) {
+          const oldSub = await regExist.pushManager.getSubscription();
+          if (oldSub) await oldSub.unsubscribe();
+        }
 
         const reg = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
@@ -470,19 +478,20 @@
           applicationServerKey: urlBase64ToUint8Array(publicKey)
         });
 
-        await fetch('/api/subscribe-push', {
+        const saveRes = await fetch('/api/subscribe-push', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(sub.toJSON())
         });
+        if (!saveRes.ok) throw new Error('Error al guardar suscripción en servidor');
 
         pushSub = sub;
         btn.textContent = '🔔 Activo';
         btn.classList.add('activo');
       } catch (e) {
-        console.error('Push error:', e);
+        console.error('[Push] Error al suscribir:', e.message);
         btn.classList.add('error');
-        btn.textContent = '⚠ Error';
+        btn.textContent = '⚠ ' + (e.message.length < 40 ? e.message : 'Error');
       }
     }
 
@@ -493,18 +502,31 @@
       return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
     }
 
-    // Restore subscription state on reload
+    // Restore subscription — verify VAPID key still matches
     (async () => {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
       try {
         const reg = await navigator.serviceWorker.getRegistration('/sw.js');
         if (!reg) return;
         const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          pushSub = sub;
-          const btn = document.getElementById('notif-btn');
-          if (btn) { btn.textContent = '🔔 Activo'; btn.classList.add('activo'); }
+        if (!sub) return;
+
+        // Compare stored subscription key with current VAPID public key
+        const { publicKey } = await fetch('/api/vapid-key').then(r => r.json()).catch(() => ({}));
+        if (publicKey && sub.options?.applicationServerKey) {
+          const storedKey = btoa(String.fromCharCode(...new Uint8Array(sub.options.applicationServerKey)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+          if (storedKey !== publicKey) {
+            // Key mismatch: old subscription is invalid, force resubscribe
+            await sub.unsubscribe();
+            console.warn('[Push] Clave VAPID cambiada — haz clic en Notificaciones para reactivar');
+            return;
+          }
         }
+
+        pushSub = sub;
+        const btn = document.getElementById('notif-btn');
+        if (btn) { btn.textContent = '🔔 Activo'; btn.classList.add('activo'); }
       } catch (e) { /* silent */ }
     })();
   </script>
