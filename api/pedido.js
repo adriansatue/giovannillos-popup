@@ -43,7 +43,13 @@ async function _handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { nombre, calle, poblacion, cp, telefono, franja, carbonara, seisquesos } = req.body || {};
+  const { clave, nombre, calle, poblacion, cp, telefono, franja, carbonara, seisquesos } = req.body || {};
+
+  // Password check
+  const expected = process.env.ORDER_PASSWORD;
+  if (!expected || !clave || clave !== expected) {
+    return res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
 
   // Required fields
   if (!nombre || !calle || !poblacion || !cp || !franja) {

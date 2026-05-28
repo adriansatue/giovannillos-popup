@@ -274,6 +274,20 @@
     .tick-txt { font-size: 12px; color: var(--muted); line-height: 1.5; }
     .tick-txt strong { color: var(--text); }
     .ok-hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* GATE */
+    #gate-view { padding: .5rem 0; }
+    .gate-lock {
+      width: 56px; height: 56px; background: #FFF5F2; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin-bottom: 1.5rem;
+    }
+    #gate-api-err {
+      display: none;
+      background: #FFF0F0; border: 1px solid #F5B3B3;
+      border-radius: var(--radius); padding: .875rem 1rem;
+      font-size: 13px; color: #C0392B; margin-bottom: 1rem; line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -288,8 +302,22 @@
       </div>
     </div>
 
+    <!-- PASSWORD GATE -->
+    <div id="gate-view">
+      <div class="gate-lock">🔒</div>
+      <div class="titulo">Acceso<br>exclusivo</div>
+      <div class="subtitulo">Esta página es solo para clientes invitados. Introduce la contraseña para acceder al formulario de pedido.</div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="gate-pwd" placeholder="••••••••" autocomplete="current-password" />
+        <div class="err-msg" id="gate-pwd-err">Introduce la contraseña</div>
+      </div>
+      <div id="gate-api-err"></div>
+      <button class="btn" id="gate-btn" onclick="verificarClave()">ACCEDER</button>
+    </div>
+
     <!-- FORM VIEW -->
-    <div id="form-view">
+    <div id="form-view" style="display:none">
       <div class="titulo">Tu envío<br>exclusivo</div>
       <div class="subtitulo">Selección especial para ti. Dinos dónde y cuándo, y llevamos las pizzas a tu puerta — mínimo 24 h de antelación.</div>
 
@@ -450,6 +478,52 @@
   </div>
 
   <script>
+    // === Gate ===
+    (function initGate() {
+      if (sessionStorage.getItem('pedido_clave')) {
+        document.getElementById('gate-view').style.display = 'none';
+        document.getElementById('form-view').style.display = 'block';
+      }
+      document.getElementById('gate-pwd').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') verificarClave();
+      });
+    })();
+
+    async function verificarClave() {
+      const input  = document.getElementById('gate-pwd');
+      const btn    = document.getElementById('gate-btn');
+      const errBox = document.getElementById('gate-api-err');
+      const clave  = input.value;
+      errBox.style.display = 'none';
+      input.classList.remove('err');
+      if (!clave) { input.classList.add('err'); return; }
+
+      btn.textContent = 'VERIFICANDO…';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/check-clave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clave })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Contraseña incorrecta');
+        sessionStorage.setItem('pedido_clave', clave);
+        document.getElementById('gate-view').style.display = 'none';
+        document.getElementById('form-view').style.display = 'block';
+      } catch (err) {
+        btn.textContent = 'ACCEDER';
+        btn.disabled = false;
+        btn.style.animation = 'shake .4s ease';
+        setTimeout(() => btn.style.animation = '', 400);
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
     // === Franja horaria ===
     const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -563,6 +637,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            clave:     sessionStorage.getItem('pedido_clave') || '',
             nombre:    n.value.trim(),
             calle:     ca.value.trim(),
             poblacion: po.value.trim(),
