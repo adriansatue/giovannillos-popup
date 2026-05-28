@@ -302,8 +302,8 @@
       </div>
     </div>
 
-    <!-- PASSWORD GATE -->
-    <div id="gate-view">
+    <!-- PASSWORD GATE (desactivado) -->
+    <div id="gate-view" style="display:none">
       <div class="gate-lock">🔒</div>
       <div class="titulo">Acceso<br>exclusivo</div>
       <div class="subtitulo">Esta página es solo para clientes invitados. Introduce la contraseña para acceder al formulario de pedido.</div>
@@ -317,7 +317,7 @@
     </div>
 
     <!-- FORM VIEW -->
-    <div id="form-view" style="display:none">
+    <div id="form-view">
       <div class="titulo">Tu envío<br>exclusivo</div>
       <div class="subtitulo">Selección especial para ti. Dinos dónde y cuándo, y llevamos las pizzas a tu puerta — mínimo 24 h de antelación.</div>
 
@@ -419,13 +419,13 @@
         </div>
       </div>
 
-      <div class="ok-titulo">¡Todo<br>listo!</div>
+      <div class="ok-titulo">¡Gracias<br>por tu<br>solicitud!</div>
       <div class="ok-sub" id="ok-nombre"></div>
 
       <div class="ticket">
         <div class="ticket-top">
           <div class="t-brand">Giovannillo's Pizza</div>
-          <div class="t-badge">✓ Confirmado</div>
+          <div class="t-badge">⏳ En revisión</div>
         </div>
         <div class="ticket-body">
           <div class="t-row">
@@ -435,7 +435,7 @@
             </div>
             <div style="text-align:right">
               <div class="t-label">Estado</div>
-              <div class="t-value" style="color:#27AE60;font-weight:600">Confirmado</div>
+              <div class="t-value" style="color:#EC6B50;font-weight:600">En revisión</div>
             </div>
           </div>
           <div class="t-row">
@@ -466,28 +466,20 @@
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="tick-txt">
-            <strong>Envío exclusivo confirmado.</strong><br />
-            Nuestro equipo te escribirá antes de la entrega para coordinar los detalles.
+            <strong>Estamos revisando tu pedido.</strong><br />
+            Muy pronto tendrás noticias — te escribiremos para confirmar todos los detalles. 🍕
           </div>
         </div>
       </div>
 
-      <div class="ok-hint">Este envío es solo para ti — gracias por ser parte del lanzamiento de Giovannillo's. 🍕</div>
+      <div class="ok-hint">¡Lo hacemos con mucho cariño! En breve nos ponemos en contacto contigo. 🍕🧀</div>
     </div>
 
   </div>
 
   <script>
-    // === Gate ===
-    (function initGate() {
-      if (sessionStorage.getItem('pedido_clave')) {
-        document.getElementById('gate-view').style.display = 'none';
-        document.getElementById('form-view').style.display = 'block';
-      }
-      document.getElementById('gate-pwd').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') verificarClave();
-      });
-    })();
+    // === Gate (desactivado) ===
+    // Las contraseñas están desactivadas temporalmente — el formulario es accesible directamente.
 
     async function verificarClave() {
       const input  = document.getElementById('gate-pwd');
