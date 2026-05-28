@@ -43,7 +43,7 @@ async function _handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { clave, nombre, calle, poblacion, cp, telefono, franja, carbonara, seisquesos } = req.body || {};
+  const { clave, nombre, calle, poblacion, cp, telefono, email, franja, carbonara, seisquesos } = req.body || {};
 
   // Code check disabled — contraseñas desactivadas temporalmente
   const claveKey = (clave && typeof clave === 'string') ? clave.trim().toUpperCase() : null;
@@ -61,6 +61,9 @@ async function _handler(req, res) {
   }
   if (!/^\d{5}$/.test(cp.trim())) {
     return res.status(400).json({ error: 'Código postal inválido' });
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return res.status(400).json({ error: 'Email inválido' });
   }
 
   // Pizza quantities
@@ -99,6 +102,7 @@ async function _handler(req, res) {
     poblacion: poblacion.trim(),
     cp:        cp.trim(),
     telefono:  (telefono || '').trim(),
+    email:     (email || '').trim(),
     franja,
     carbonara: c,
     seisquesos: q,

@@ -282,6 +282,7 @@
       const hash = await sha256(val);
       if (hash === PW_HASH) {
         sessionStorage.setItem('gv_auth', '1');
+        sessionStorage.setItem('gv_tok', hash);
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         loadData(); loadPedidos();
@@ -301,6 +302,8 @@
       inp.type = inp.type === 'password' ? 'text' : 'password';
     }
 
+    function tok() { return sessionStorage.getItem('gv_tok') || ''; }
+
     // Check session on load
     if (sessionStorage.getItem('gv_auth') === '1') {
       document.getElementById('login-screen').style.display = 'none';
@@ -316,7 +319,7 @@
 
     async function loadData() {
       try {
-        const res = await fetch('/api/registros');
+        const res = await fetch('/api/registros', { headers: { 'x-session': tok() } });
         if (res.ok) { db = await res.json(); render(); }
       } catch (e) { /* silent */ }
     }
@@ -327,7 +330,7 @@
       try {
         await fetch('/api/validar', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-session': tok() },
           body: JSON.stringify({ email })
         });
         await loadData();
@@ -384,7 +387,7 @@
 
     async function loadPedidos() {
       try {
-        const res = await fetch('/api/pedidos');
+        const res = await fetch('/api/pedidos', { headers: { 'x-session': tok() } });
         if (res.ok) { dbPed = await res.json(); renderPedidos(); }
       } catch (e) { /* silent */ }
     }
@@ -452,7 +455,7 @@
       try {
         await fetch('/api/actualizar-pedido', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-session': tok() },
           body: JSON.stringify({ id, estado: next })
         });
       } catch (e) {
@@ -508,7 +511,7 @@
         try {
           await fetch('/api/subscribe-push', {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-session': tok() },
             body: JSON.stringify({ endpoint: pushSub.endpoint })
           });
           await pushSub.unsubscribe();
@@ -555,7 +558,7 @@
 
         const saveRes = await fetch('/api/subscribe-push', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-session': tok() },
           body: JSON.stringify(sub.toJSON())
         });
         if (!saveRes.ok) throw new Error('Error al guardar suscripción en servidor');

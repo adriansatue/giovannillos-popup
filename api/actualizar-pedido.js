@@ -5,7 +5,14 @@ import { kv } from '@vercel/kv';
 
 const ESTADOS = ['pendiente', 'confirmado', 'entregado'];
 
+function checkSession(req) {
+  const tok = req.headers['x-session'];
+  return tok && process.env.ADMIN_PW_HASH && tok === process.env.ADMIN_PW_HASH;
+}
+
 export default async function handler(req, res) {
+  if (!checkSession(req)) return res.status(401).json({ error: 'No autorizado' });
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

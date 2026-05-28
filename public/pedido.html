@@ -344,10 +344,17 @@
           <div class="err-msg">5 dígitos</div>
         </div>
       </div>
-      <div class="field">
-        <label>Teléfono</label>
-        <input type="tel" id="f-telefono" placeholder="612 345 678" autocomplete="tel" inputmode="tel" />
-        <div class="err-msg">Teléfono no válido (mín. 9 dígitos)</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="tel" id="f-telefono" placeholder="612 345 678" autocomplete="tel" inputmode="tel" />
+          <div class="err-msg">Teléfono no válido (mín. 9 dígitos)</div>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="juan@ejemplo.com" autocomplete="email" inputmode="email" />
+          <div class="err-msg">Email no válido</div>
+        </div>
       </div>
 
       <div class="field">
@@ -419,7 +426,6 @@
         </div>
       </div>
 
-      <div class="ok-titulo">¡Gracias<br>por tu<br>solicitud!</div>
       <div class="ok-sub" id="ok-nombre"></div>
 
       <div class="ticket">
@@ -599,13 +605,14 @@
       const po   = document.getElementById('f-poblacion');
       const cp   = document.getElementById('f-cp');
       const tel  = document.getElementById('f-telefono');
+      const em   = document.getElementById('f-email');
       const f    = document.getElementById('f-franja');
       const t    = document.getElementById('tyc');
       const tErr = document.getElementById('tyc-err');
       const pErr = document.getElementById('pizza-err');
       let ok = true;
 
-      [n, ca, po, cp, tel, f].forEach(el => el.classList.remove('err'));
+      [n, ca, po, cp, tel, em, f].forEach(el => el.classList.remove('err'));
       tErr.style.display = 'none';
       pErr.style.display = 'none';
       document.getElementById('api-err').style.display = 'none';
@@ -615,6 +622,7 @@
       if (!po.value.trim())  { po.classList.add('err'); ok = false; }
       if (!/^\d{5}$/.test(cp.value.trim())) { cp.classList.add('err'); ok = false; }
       if (tel.value.replace(/\D/g,'').length < 9) { tel.classList.add('err'); ok = false; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())) { em.classList.add('err'); ok = false; }
       if (!f.value)         { f.classList.add('err'); ok = false; }
       if (cC + cQ < 1)      { pErr.style.display = 'block'; ok = false; }
       if (!t.checked)       { tErr.style.display = 'block'; ok = false; }
@@ -636,6 +644,7 @@
             poblacion: po.value.trim(),
             cp:        cp.value.trim(),
             telefono:  tel.value.trim(),
+            email:     em.value.trim(),
             franja:    f.value,
             carbonara: cC,
             seisquesos: cQ

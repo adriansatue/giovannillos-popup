@@ -4,7 +4,14 @@
 
 import { kv } from '@vercel/kv';
 
+function checkSession(req) {
+  const tok = req.headers['x-session'];
+  return tok && process.env.ADMIN_PW_HASH && tok === process.env.ADMIN_PW_HASH;
+}
+
 export default async function handler(req, res) {
+  if (!checkSession(req)) return res.status(401).json({ error: 'No autorizado' });
+
   if (req.method === 'POST') {
     const sub = req.body;
     if (!sub?.endpoint || typeof sub.endpoint !== 'string') {
