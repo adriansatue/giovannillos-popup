@@ -45,11 +45,16 @@ async function _handler(req, res) {
 
   const { clave, nombre, calle, poblacion, cp, telefono, franja, carbonara, seisquesos } = req.body || {};
 
-  // Password check
-  const expected = process.env.ORDER_PASSWORD;
-  if (!expected || !clave || clave !== expected) {
-    return res.status(401).json({ error: 'Contraseña incorrecta' });
+  // Code check — look up per-user code in KV
+  if (!clave || typeof clave !== 'string') {
+    return res.status(401).json({ error: 'Código incorrecto' });
   }
+  const claveKey = clave.trim().toUpperCase();
+  const claveRaw = await kv.hget('claves', claveKey);
+  if (!claveRaw) {
+    return res.status(401).json({ error: 'Código incorrecto' });
+  }
+  const claveRecord = typeof claveRaw === 'string' ? JSON.parse(claveRaw) : claveRaw;
 
   // Required fields
   if (!nombre || !calle || !poblacion || !cp || !franja) {
@@ -95,6 +100,7 @@ async function _handler(req, res) {
   const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const pedido = {
     id,
+    clave_id:   claveKey,
     nombre:    nombre.trim(),
     calle:     calle.trim(),
     poblacion: poblacion.trim(),
@@ -108,6 +114,18 @@ async function _handler(req, res) {
     estado: 'pendiente'
   };
   await kv.hset('pedidos', { [id]: JSON.stringify(pedido) });
+
+  // Update code usage stats (best-effort, never fail the request)
+  try {
+    claveRecord.usos = (claveRecord.usos || 0) + 1;
+    if (!claveRecord.primer_uso) {
+      claveRecord.primer_uso    = pedido.ts;
+      claveRecord.primer_nombre = pedido.nombre;
+    }
+    await kv.hset('claves', { [claveKey]: JSON.stringify(claveRecord) });
+  } catch (e) {
+    console.error('[/api/pedido] Error updating clave usage:', e);
+  }
 
   // Fire push notifications (best-effort, never fail the request)
   const push = getPushClient();

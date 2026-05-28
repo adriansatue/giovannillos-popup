@@ -1,22 +1,23 @@
 // api/check-clave.js
-// Validates the order-page password. Returns 200 on success, 401 on failure.
-// Does NOT reveal the password in the response.
+// Validates a per-user order code against the KV store.
+// Returns 200 on success, 401 on failure. Never leaks why it failed.
 
-export default function handler(req, res) {
+import { kv } from '@vercel/kv';
+
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { clave } = req.body || {};
-
-  const expected = process.env.ORDER_PASSWORD;
-  if (!expected) {
-    // If the env var is missing, fail closed — no orders allowed
-    return res.status(503).json({ error: 'Servicio no disponible' });
+  if (!clave || typeof clave !== 'string') {
+    return res.status(401).json({ error: 'Código incorrecto' });
   }
 
-  if (!clave || clave !== expected) {
-    return res.status(401).json({ error: 'Contraseña incorrecta' });
+  const codigo = clave.trim().toUpperCase();
+  const raw = await kv.hget('claves', codigo);
+  if (!raw) {
+    return res.status(401).json({ error: 'Código incorrecto' });
   }
 
   return res.status(200).json({ ok: true });

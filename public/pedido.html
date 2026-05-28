@@ -309,7 +309,7 @@
       <div class="subtitulo">Esta página es solo para clientes invitados. Introduce la contraseña para acceder al formulario de pedido.</div>
       <div class="field">
         <label>Contraseña</label>
-        <input type="password" id="gate-pwd" placeholder="••••••••" autocomplete="current-password" />
+        <input type="password" id="gate-pwd" placeholder="GVLL-XXXX" autocomplete="current-password" />
         <div class="err-msg" id="gate-pwd-err">Introduce la contraseña</div>
       </div>
       <div id="gate-api-err"></div>
@@ -493,7 +493,7 @@
       const input  = document.getElementById('gate-pwd');
       const btn    = document.getElementById('gate-btn');
       const errBox = document.getElementById('gate-api-err');
-      const clave  = input.value;
+      const clave  = input.value.trim().toUpperCase();
       errBox.style.display = 'none';
       input.classList.remove('err');
       if (!clave) { input.classList.add('err'); return; }
@@ -632,8 +632,9 @@
       btn.textContent = 'ENVIANDO…';
       btn.disabled = true;
 
+      let _apiRes;
       try {
-        const res = await fetch('/api/pedido', {
+        _apiRes = await fetch('/api/pedido', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -648,13 +649,24 @@
             seisquesos: cQ
           })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al enviar');
+        const data = await _apiRes.json();
+        if (!_apiRes.ok) throw new Error(data.error || 'Error al enviar');
       } catch (err) {
         btn.textContent = 'ENVIAR PEDIDO';
         btn.disabled = false;
         btn.style.animation = 'shake .4s ease';
         setTimeout(() => btn.style.animation = '', 400);
+        // Code rejected — clear session and send user back to the gate
+        if (_apiRes && _apiRes.status === 401) {
+          sessionStorage.removeItem('pedido_clave');
+          document.getElementById('form-view').style.display = 'none';
+          document.getElementById('gate-view').style.display = 'block';
+          const gErr = document.getElementById('gate-api-err');
+          gErr.textContent = 'El código ha expirado o no es válido. Vuelve a introducirlo.';
+          gErr.style.display = 'block';
+          document.getElementById('gate-pwd').focus();
+          return;
+        }
         const errBox = document.getElementById('api-err');
         errBox.textContent = err.message || 'Algo ha fallado. Comprueba tu conexión e inténtalo de nuevo.';
         errBox.style.display = 'block';
