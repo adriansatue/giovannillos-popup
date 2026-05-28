@@ -33,14 +33,20 @@ export default async function handler(req, res) {
     lista.sort((a, b) => new Date(a.ts) - new Date(b.ts));
 
     const resumen = lista.map(p => ({
-      id:       p.id,
-      ts:       p.ts,
-      nombre:   p.nombre,
-      calle:    p.calle,
-      cp:       p.cp,
-      poblacion:p.poblacion,
-      total:    p.total,
-      clave_id: p.clave_id || null,
+      id:        p.id,
+      ts:        p.ts,
+      nombre:    p.nombre,
+      email:     p.email    || null,
+      telefono:  p.telefono || null,
+      calle:     p.calle,
+      cp:        p.cp,
+      poblacion: p.poblacion,
+      franja:    p.franja,
+      carbonara: p.carbonara,
+      seisquesos:p.seisquesos,
+      total:     p.total,
+      estado:    p.estado,
+      clave_id:  p.clave_id || null,
     }));
 
     return res.status(200).json({
