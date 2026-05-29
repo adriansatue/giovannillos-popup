@@ -22,9 +22,9 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 1.25rem 1rem 3rem;
+      padding: 1.25rem 1.5rem 3rem;
     }
-    .container { width: 100%; max-width: 960px; margin: 0 auto; }
+    .container { width: 100%; max-width: 1280px; margin: 0 auto; }
 
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
     .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--text); }
@@ -171,12 +171,26 @@
 
     /* TABLE */
     .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius); border: 1px solid var(--border); }
-    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .tbl thead th { padding: 10px 12px; background: #F7F1EE; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
-    .tbl tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+    .tbl thead th { padding: 10px 14px; background: #F7F1EE; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
+    .tbl tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tbl tbody tr:last-child td { border-bottom: none; }
     .tbl tbody tr:hover td { background: #FFF5F2; }
     .tbl tbody tr.validado td { opacity: .55; }
+    /* Column widths for pedidos table */
+    .tbl.tbl-ped .col-nombre  { width: 160px; }
+    .tbl.tbl-ped .col-email   { width: 200px; }
+    .tbl.tbl-ped .col-tel     { width: 130px; }
+    .tbl.tbl-ped .col-dir     { width: 220px; }
+    .tbl.tbl-ped .col-franja  { width: 180px; }
+    .tbl.tbl-ped .col-pizzas  { width: 170px; }
+    .tbl.tbl-ped .col-estado  { width: 110px; }
+    /* Column widths for registros table */
+    .tbl.tbl-reg .col-nombre  { width: 200px; }
+    .tbl.tbl-reg .col-email   { width: 250px; }
+    .tbl.tbl-reg .col-cp      { width: 80px; }
+    .tbl.tbl-reg .col-estado  { width: 110px; }
+    .tbl.tbl-reg .col-accion  { width: 90px; }
     .td-nombre { font-weight: 500; white-space: nowrap; color: var(--text); }
     .td-muted { color: var(--muted); }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
@@ -208,13 +222,16 @@
       <div class="login-title">Panel de Entrada</div>
       <div class="login-sub">Acceso restringido al equipo de organización.</div>
       <div class="login-field">
-        <input type="password" id="pw-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter')login()" />
+        <input type="email" id="em-input" placeholder="Email" autocomplete="username" onkeydown="if(event.key==='Enter')login()" />
+      </div>
+      <div class="login-field">
+        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()" />
         <button class="toggle-pw" onclick="togglePw()" tabindex="-1" aria-label="Mostrar contraseña">
           <svg id="eye-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
-      <div class="login-err" id="login-err">Contraseña incorrecta. Inténtalo de nuevo.</div>
-      <button class="login-btn" onclick="login()">ACCEDER</button>
+      <div class="login-err" id="login-err">Credenciales incorrectas. Inténtalo de nuevo.</div>
+      <button class="login-btn" id="login-btn" onclick="login()">ACCEDER</button>
     </div>
   </div>
 
@@ -269,37 +286,61 @@
   </div> <!-- /app -->
 
   <script>
-    // SHA-256 hash of: Giov@nnill0s#2026
-    const PW_HASH = '2909453f9eb38461afa5bc62e639dca7dab1051b1d6f9fdcdfa0b6565b3e2ed1';
+    async function login() {
+      const email = (document.getElementById('em-input').value || '').trim();
+      const pw    = document.getElementById('pw-input').value;
+      const btn   = document.getElementById('login-btn');
 
-    async function sha256(str) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      if (!email || !pw) {
+        shakeLogin();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pw })
+        });
+        if (res.ok) {
+          const { token } = await res.json();
+          sessionStorage.setItem('gv_auth', '1');
+          sessionStorage.setItem('gv_tok', token);
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          loadData(); loadPedidos();
+          setInterval(() => { loadData(); loadPedidos(); }, 4000);
+        } else {
+          shakeLogin();
+        }
+      } catch (e) {
+        shakeLogin();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'ACCEDER';
+      }
     }
 
-    async function login() {
-      const val = document.getElementById('pw-input').value;
-      const hash = await sha256(val);
-      if (hash === PW_HASH) {
-        sessionStorage.setItem('gv_auth', '1');
-        sessionStorage.setItem('gv_tok', hash);
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        loadData(); loadPedidos();
-        setInterval(() => { loadData(); loadPedidos(); }, 4000);
-      } else {
-        const inp = document.getElementById('pw-input');
-        const err = document.getElementById('login-err');
-        inp.classList.add('err');
-        err.style.display = 'block';
-        inp.style.animation = 'loginShake .4s ease';
-        setTimeout(() => { inp.style.animation = ''; inp.classList.remove('err'); }, 400);
-      }
+    function shakeLogin() {
+      const inp = document.getElementById('pw-input');
+      const err = document.getElementById('login-err');
+      inp.classList.add('err');
+      err.style.display = 'block';
+      inp.style.animation = 'loginShake .4s ease';
+      setTimeout(() => { inp.style.animation = ''; inp.classList.remove('err'); }, 400);
     }
 
     function togglePw() {
       const inp = document.getElementById('pw-input');
       inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      location.reload();
     }
 
     function tok() { return sessionStorage.getItem('gv_tok') || ''; }
@@ -320,6 +361,7 @@
     async function loadData() {
       try {
         const res = await fetch('/api/registros', { headers: { 'x-session': tok() } });
+        if (res.status === 401) { logout(); return; }
         if (res.ok) { db = await res.json(); render(); }
       } catch (e) { /* silent */ }
     }
@@ -354,7 +396,9 @@
         el.innerHTML = '<div class="empty">Sin registros aún</div>';
         return;
       }
-      el.innerHTML = '<table class="tbl"><thead><tr>'
+      el.innerHTML = '<table class="tbl tbl-reg"><colgroup>'
+        + '<col class="col-nombre"><col class="col-email"><col class="col-cp"><col class="col-estado"><col class="col-accion">'
+        + '</colgroup><thead><tr>'
         + '<th>Nombre</th><th>Email</th><th>CP</th><th>Estado</th><th></th>'
         + '</tr></thead><tbody>'
         + list.map(r => '<tr class="' + (r.entrada ? 'validado' : '') + '">'
@@ -388,6 +432,7 @@
     async function loadPedidos() {
       try {
         const res = await fetch('/api/pedidos', { headers: { 'x-session': tok() } });
+        if (res.status === 401) { logout(); return; }
         if (res.ok) { dbPed = await res.json(); renderPedidos(); }
       } catch (e) { /* silent */ }
     }
@@ -420,7 +465,9 @@
       const el = document.getElementById('lista-ped');
       if (!list.length) { el.innerHTML = '<div class="empty">Sin pedidos aún</div>'; return; }
 
-      el.innerHTML = '<table class="tbl"><thead><tr>'
+      el.innerHTML = '<table class="tbl tbl-ped"><colgroup>'
+        + '<col class="col-nombre"><col class="col-email"><col class="col-tel"><col class="col-dir"><col class="col-franja"><col class="col-pizzas"><col class="col-estado">'
+        + '</colgroup><thead><tr>'
         + '<th>Nombre</th><th>Email</th><th>Teléfono</th><th>Dirección</th><th>Franja</th><th>Pizzas</th><th>Estado</th>'
         + '</tr></thead><tbody>'
         + list.map(p => {
@@ -436,8 +483,8 @@
               + '<td class="td-nombre">' + esc(p.nombre)          + '</td>'
               + '<td class="td-muted">'  + esc(p.email    || '—') + '</td>'
               + '<td class="td-muted">'  + esc(p.telefono || '—') + '</td>'
-              + '<td class="td-muted">'  + esc(dir        || '—') + '</td>'
-              + '<td class="td-muted" style="white-space:nowrap">' + esc(fr) + '</td>'
+              + '<td class="td-muted" title="' + esc(dir) + '">' + esc(dir || '—') + '</td>'
+              + '<td class="td-muted">'  + esc(fr) + '</td>'
               + '<td class="td-muted">'  + esc(pizzas) + '</td>'
               + '<td><button class="ped-estado" data-e="' + estado + '" onclick="cambiarEstado(\'' + p.id + '\')">' + ESTADO_LABEL[estado] + '</button></td>'
               + '</tr>';
